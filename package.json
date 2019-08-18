@@ -1,0 +1,29 @@
+{
+  "name": "@cocos-creator-3d/cc-gltf",
+  "version": "1.0.4",
+  "description": "A tool to convert between cc asset and glTF.",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cocos-creator/cc-glTF.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cocos-creator/cc-glTF/issues"
+  },
+  "homepage": "https://github.com/cocos-creator/cc-glTF#readme",
+  "dependencies": {
+    "image-data-uri": "^2.0.1",
+    "parse-data-url": "^2.0.0",
+    "uri-js": "^4.2.2"
+  },
+  "devDependencies": {
+    "@zoltu/typescript-transformer-append-js-extension": "^1.0.1",
+    "ttypescript": "^1.5.7",
+    "typescript": "^3.5.3"
+  }
+}
