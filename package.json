@@ -1,6 +1,6 @@
 {
   "name": "@cocos-creator-3d/cc-gltf",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A tool to convert between cc asset and glTF.",
   "main": "dist/cjs/index.js",
   "scripts": {

@@ -5,7 +5,8 @@ export declare enum AssetFinderKind {
     animation = "animations",
     skeleton = "skeletons",
     texture = "textures",
-    material = "materials"
+    material = "materials",
+    image = "images"
 }
 export interface AssetFinderResultMap {
     [AssetFinderKind.mesh]: ccm.Mesh;
@@ -13,6 +14,7 @@ export interface AssetFinderResultMap {
     [AssetFinderKind.skeleton]: ccm.Skeleton;
     [AssetFinderKind.texture]: ccm.Texture2D;
     [AssetFinderKind.material]: ccm.Material;
+    [AssetFinderKind.image]: ccm.ImageAsset;
 }
 export interface AssetFinder {
     find<AFK extends AssetFinderKind>(kind: AFK, index: number): AssetFinderResultMap[AFK] | null;
@@ -90,6 +92,7 @@ export declare class GltfConverter {
         from: number;
         to: number;
     }): import("cc").SkeletalAnimationClip;
+    createTexture(index: number, assetFinder: AssetFinder): import("cc").Texture2D;
     createMaterial(iGltfMaterial: number, gltfAssetFinder: AssetFinder, effectGetter: (name: string) => ccm.EffectAsset): import("cc").Material;
     getTextureParameters(gltfTexture: glTF.Texture): Partial<{
         wrapModeS: any;
@@ -144,5 +147,5 @@ export declare function readGltf(glTFFileUri: string, glTFHost: GLTFHost): Promi
     gltf: glTF.GlTf;
     binaryBuffers: DataView[];
 }>;
-export declare function isDataUri(uri: string): any;
+export declare function isDataUri(uri: string): boolean;
 export declare function resolveGLTFUri(glTFFileURI: string, uri: string): string;

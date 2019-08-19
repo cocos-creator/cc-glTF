@@ -11,6 +11,7 @@ export enum AssetFinderKind {
     skeleton = 'skeletons',
     texture = 'textures',
     material = 'materials',
+    image= 'images',
 }
 
 export interface AssetFinderResultMap {
@@ -19,6 +20,7 @@ export interface AssetFinderResultMap {
     [AssetFinderKind.skeleton]: ccm.Skeleton;
     [AssetFinderKind.texture]: ccm.Texture2D;
     [AssetFinderKind.material]: ccm.Material;
+    [AssetFinderKind.image]: ccm.ImageAsset;
 }
 
 export interface AssetFinder {
@@ -548,6 +550,29 @@ export class GltfConverter {
         animationClip.keys = keys;
         animationClip.sample = 30;
         return animationClip;
+    }
+
+    public createTexture(index: number, assetFinder: AssetFinder) {
+        const glTFTexture = this._gltf.textures![index];
+        const textureParameters = Object.assign({
+            wrapModeS: ccm.Texture2D.WrapMode.REPEAT,
+            wrapModeT: ccm.Texture2D.WrapMode.REPEAT,
+            minFilter: ccm.Texture2D.Filter.LINEAR,
+            magFilter: ccm.Texture2D.Filter.LINEAR,
+            mipFilter: ccm.Texture2D.Filter.NONE,
+        }, this.getTextureParameters(glTFTexture));
+        const ccTexture = new ccm.Texture2D();
+        ccTexture.name = glTFTexture.name;
+        ccTexture.setFilters(textureParameters.minFilter, textureParameters.magFilter);
+        ccTexture.setWrapMode(textureParameters.wrapModeS, textureParameters.wrapModeT);
+        ccTexture.setMipFilter(textureParameters.mipFilter);
+        if (glTFTexture.source !== undefined) {
+            const ccImage = assetFinder.find(AssetFinderKind.image, glTFTexture.source);
+            if (ccImage) {
+                ccTexture.image = ccImage;
+            }
+        }
+        return ccTexture;
     }
 
     public createMaterial(
