@@ -1,11 +1,11 @@
-import * as imageDataUri from 'image-data-uri';
-import * as parseDataUrl from 'parse-data-url';
+import parseDataUrl from 'parse-data-url';
 import * as glTF from '../@types/glTF';
 import * as URI from 'uri-js';
+import { decodeImageDataURI } from './data-uri-utils';
 
 // tslint:disable:no-string-literal
 
-export const enum AssetFinderKind {
+export enum AssetFinderKind {
     mesh = 'meshes',
     animation = 'animations',
     skeleton = 'skeletons',
@@ -1329,7 +1329,7 @@ export class GltfConverter {
     }
 
     private _readImageByDataUri(dataUri: string) {
-        const result = imageDataUri.decode(dataUri);
+        const result = decodeImageDataURI(dataUri);
         if (!result) {
             return undefined;
         }
@@ -1340,7 +1340,7 @@ export class GltfConverter {
         }
         return {
             extName: `.${x[x.length - 1]}`,
-            imageData: new DataView(result.dataBuffer.buffer, result.dataBuffer.byteOffset, result.dataBuffer.byteLength),
+            imageData: new DataView(result.data.buffer, result.data.byteOffset, result.data.byteLength),
         };
     }
 

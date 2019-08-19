@@ -1,10 +1,10 @@
 {
   "name": "@cocos-creator-3d/cc-gltf",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "A tool to convert between cc asset and glTF.",
-  "main": "dist/index.js",
+  "main": "dist/cjs/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npx ttsc --project ./tsconfig.json"
   },
   "repository": {
     "type": "git",
