@@ -92,6 +92,7 @@ export declare class GltfConverter {
         from: number;
         to: number;
     }): import("cc").SkeletalAnimationClip;
+    createImage(index: number): Promise<unknown>;
     createTexture(index: number, assetFinder: AssetFinder): import("cc").Texture2D;
     createMaterial(iGltfMaterial: number, gltfAssetFinder: AssetFinder, effectGetter: (name: string) => ccm.EffectAsset): import("cc").Material;
     getTextureParameters(gltfTexture: glTF.Texture): Partial<{

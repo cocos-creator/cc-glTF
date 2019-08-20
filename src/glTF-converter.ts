@@ -2,6 +2,7 @@ import parseDataUrl from 'parse-data-url';
 import * as glTF from '../@types/glTF';
 import * as URI from 'uri-js';
 import { decodeImageDataURI } from './data-uri-utils';
+import { CCInteger } from 'cc';
 
 // tslint:disable:no-string-literal
 
@@ -552,6 +553,38 @@ export class GltfConverter {
         return animationClip;
     }
 
+    public async createImage(index: number) {
+        return new Promise((resolve, reject) => {
+            const glTFImage = this._gltf.images![index];
+            
+            let uri: string | undefined;
+            if (glTFImage.uri !== undefined) {
+                uri = glTFImage.uri;
+            } else if (glTFImage.bufferView !== undefined) {
+                const encodedImage = this._readImageInBufferview(
+                    this._gltf.bufferViews![glTFImage.bufferView], glTFImage.mimeType);
+                const bytes = new Uint8Array(encodedImage.imageData.buffer, encodedImage.imageData.byteOffset, encodedImage.imageData.byteLength);
+                uri = `data:${glTFImage.mimeType};base64,${base64OfBytes(bytes)}`
+            }
+
+            const ccImage = new ccm.ImageAsset();
+            if (uri === undefined) {
+                resolve(ccImage);
+                return;
+            }
+            
+            const domImage = new Image();
+            domImage.onload = () => {
+                ccImage.reset(domImage);
+                resolve(ccImage);
+            };
+            domImage.onerror = () => {
+                reject();
+            };
+            domImage.src = uri;
+        });
+    }
+
     public createTexture(index: number, assetFinder: AssetFinder) {
         const glTFTexture = this._gltf.textures![index];
         const textureParameters = Object.assign({
@@ -723,55 +756,55 @@ export class GltfConverter {
     }
 
     public getTextureParameters(gltfTexture: glTF.Texture) {
-        const convertWrapMode = (gltfWrapMode?: number): ccm.TextureBase.WrapMode =>  {
+        const convertWrapMode = (gltfWrapMode?: number): ccm.Texture2D.WrapMode =>  {
             if (gltfWrapMode === undefined) {
                 gltfWrapMode = glTF.WrapMode.__DEFAULT;
             }
             switch (gltfWrapMode) {
-                case glTF.WrapMode.CLAMP_TO_EDGE: return ccm.TextureBase.WrapMode.CLAMP_TO_EDGE;
-                case glTF.WrapMode.MIRRORED_REPEAT: return ccm.TextureBase.WrapMode.MIRRORED_REPEAT;
-                case glTF.WrapMode.REPEAT: return ccm.TextureBase.WrapMode.REPEAT;
+                case glTF.WrapMode.CLAMP_TO_EDGE: return ccm.Texture2D.WrapMode.CLAMP_TO_EDGE;
+                case glTF.WrapMode.MIRRORED_REPEAT: return ccm.Texture2D.WrapMode.MIRRORED_REPEAT;
+                case glTF.WrapMode.REPEAT: return ccm.Texture2D.WrapMode.REPEAT;
                 default:
                     console.error(`Unsupported wrapMode: ${gltfWrapMode}, 'repeat' is used.(in ${this.url})`);
-                    return ccm.TextureBase.WrapMode.REPEAT;
+                    return ccm.Texture2D.WrapMode.REPEAT;
             }
         };
 
-        const convertMagFilter = (gltfFilter: number): ccm.TextureBase.Filter => {
+        const convertMagFilter = (gltfFilter: number): ccm.Texture2D.Filter => {
             switch (gltfFilter) {
-                case glTF.TextureMagFilter.NEAREST: return ccm.TextureBase.Filter.NEAREST;
-                case glTF.TextureMagFilter.LINEAR: return ccm.TextureBase.Filter.LINEAR;
+                case glTF.TextureMagFilter.NEAREST: return ccm.Texture2D.Filter.NEAREST;
+                case glTF.TextureMagFilter.LINEAR: return ccm.Texture2D.Filter.LINEAR;
                 default:
                     console.warn(`Unsupported filter: ${gltfFilter}, 'linear' is used.(in ${this.url})`);
-                    return ccm.TextureBase.Filter.LINEAR;
+                    return ccm.Texture2D.Filter.LINEAR;
             }
         };
 
-        const convertMinFilter = (gltfFilter: number): ccm.TextureBase.Filter[] => {
+        const convertMinFilter = (gltfFilter: number): ccm.Texture2D.Filter[] => {
             switch (gltfFilter) {
-                case glTF.TextureMinFilter.NEAREST: return [ccm.TextureBase.Filter.NEAREST, ccm.TextureBase.Filter.NONE];
-                case glTF.TextureMinFilter.LINEAR: return [ccm.TextureBase.Filter.LINEAR, ccm.TextureBase.Filter.NONE];
-                case glTF.TextureMinFilter.NEAREST_MIPMAP_NEAREST: return [ccm.TextureBase.Filter.NEAREST, ccm.TextureBase.Filter.NEAREST];
-                case glTF.TextureMinFilter.LINEAR_MIPMAP_NEAREST: return [ccm.TextureBase.Filter.LINEAR, ccm.TextureBase.Filter.NEAREST];
-                case glTF.TextureMinFilter.NEAREST_MIPMAP_LINEAR: return [ccm.TextureBase.Filter.NEAREST, ccm.TextureBase.Filter.LINEAR];
-                case glTF.TextureMinFilter.LINEAR_MIPMAP_LINEAR: return [ccm.TextureBase.Filter.LINEAR, ccm.TextureBase.Filter.LINEAR];
+                case glTF.TextureMinFilter.NEAREST: return [ccm.Texture2D.Filter.NEAREST, ccm.Texture2D.Filter.NONE];
+                case glTF.TextureMinFilter.LINEAR: return [ccm.Texture2D.Filter.LINEAR, ccm.Texture2D.Filter.NONE];
+                case glTF.TextureMinFilter.NEAREST_MIPMAP_NEAREST: return [ccm.Texture2D.Filter.NEAREST, ccm.Texture2D.Filter.NEAREST];
+                case glTF.TextureMinFilter.LINEAR_MIPMAP_NEAREST: return [ccm.Texture2D.Filter.LINEAR, ccm.Texture2D.Filter.NEAREST];
+                case glTF.TextureMinFilter.NEAREST_MIPMAP_LINEAR: return [ccm.Texture2D.Filter.NEAREST, ccm.Texture2D.Filter.LINEAR];
+                case glTF.TextureMinFilter.LINEAR_MIPMAP_LINEAR: return [ccm.Texture2D.Filter.LINEAR, ccm.Texture2D.Filter.LINEAR];
                 default:
                     console.warn(`Unsupported filter: ${gltfFilter}, 'linear' is used.(in ${this.url})`);
-                    return [ccm.TextureBase.Filter.LINEAR, ccm.TextureBase.Filter.NONE];
+                    return [ccm.Texture2D.Filter.LINEAR, ccm.Texture2D.Filter.NONE];
             }
         };
 
         const result: Partial<{
-            wrapModeS: ccm.TextureBase.WrapMode;
-            wrapModeT: ccm.TextureBase.WrapMode;
-            minFilter: ccm.TextureBase.Filter;
-            magFilter: ccm.TextureBase.Filter;
-            mipFilter: ccm.TextureBase.Filter;
+            wrapModeS: ccm.Texture2D.WrapMode;
+            wrapModeT: ccm.Texture2D.WrapMode;
+            minFilter: ccm.Texture2D.Filter;
+            magFilter: ccm.Texture2D.Filter;
+            mipFilter: ccm.Texture2D.Filter;
         }> = {};
 
         if (gltfTexture.sampler === undefined) {
-            result.wrapModeS = ccm.TextureBase.WrapMode.REPEAT;
-            result.wrapModeT = ccm.TextureBase.WrapMode.REPEAT;
+            result.wrapModeS = ccm.Texture2D.WrapMode.REPEAT;
+            result.wrapModeT = ccm.Texture2D.WrapMode.REPEAT;
         } else {
             const gltfSampler = this._gltf.samplers![gltfTexture.sampler];
             result.wrapModeS = convertWrapMode(gltfSampler.wrapS);
@@ -2145,4 +2178,12 @@ function makeUniqueNames(names: Array<(string | null)>, generator: UniqueNameGen
         }
     }
     return uniqueNames;
+}
+
+function base64OfBytes(bytes: Uint8Array) {
+    let binary = '';
+    for (let i = 0; i < bytes.length; ++i) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
 }

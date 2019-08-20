@@ -501,6 +501,36 @@ class GltfConverter {
         animationClip.sample = 30;
         return animationClip;
     }
+    createImage(index) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                const glTFImage = this._gltf.images[index];
+                let uri;
+                if (glTFImage.uri !== undefined) {
+                    uri = glTFImage.uri;
+                }
+                else if (glTFImage.bufferView !== undefined) {
+                    const encodedImage = this._readImageInBufferview(this._gltf.bufferViews[glTFImage.bufferView], glTFImage.mimeType);
+                    const bytes = new Uint8Array(encodedImage.imageData.buffer, encodedImage.imageData.byteOffset, encodedImage.imageData.byteLength);
+                    uri = `data:${glTFImage.mimeType};base64,${base64OfBytes(bytes)}`;
+                }
+                const ccImage = new ccm.ImageAsset();
+                if (uri === undefined) {
+                    resolve(ccImage);
+                    return;
+                }
+                const domImage = new Image();
+                domImage.onload = () => {
+                    ccImage.reset(domImage);
+                    resolve(ccImage);
+                };
+                domImage.onerror = () => {
+                    reject();
+                };
+                domImage.src = uri;
+            });
+        });
+    }
     createTexture(index, assetFinder) {
         const glTFTexture = this._gltf.textures[index];
         const textureParameters = Object.assign({
@@ -656,40 +686,40 @@ class GltfConverter {
                 gltfWrapMode = 10497 /* __DEFAULT */;
             }
             switch (gltfWrapMode) {
-                case 33071 /* CLAMP_TO_EDGE */: return ccm.TextureBase.WrapMode.CLAMP_TO_EDGE;
-                case 33648 /* MIRRORED_REPEAT */: return ccm.TextureBase.WrapMode.MIRRORED_REPEAT;
-                case 10497 /* REPEAT */: return ccm.TextureBase.WrapMode.REPEAT;
+                case 33071 /* CLAMP_TO_EDGE */: return ccm.Texture2D.WrapMode.CLAMP_TO_EDGE;
+                case 33648 /* MIRRORED_REPEAT */: return ccm.Texture2D.WrapMode.MIRRORED_REPEAT;
+                case 10497 /* REPEAT */: return ccm.Texture2D.WrapMode.REPEAT;
                 default:
                     console.error(`Unsupported wrapMode: ${gltfWrapMode}, 'repeat' is used.(in ${this.url})`);
-                    return ccm.TextureBase.WrapMode.REPEAT;
+                    return ccm.Texture2D.WrapMode.REPEAT;
             }
         };
         const convertMagFilter = (gltfFilter) => {
             switch (gltfFilter) {
-                case 9728 /* NEAREST */: return ccm.TextureBase.Filter.NEAREST;
-                case 9729 /* LINEAR */: return ccm.TextureBase.Filter.LINEAR;
+                case 9728 /* NEAREST */: return ccm.Texture2D.Filter.NEAREST;
+                case 9729 /* LINEAR */: return ccm.Texture2D.Filter.LINEAR;
                 default:
                     console.warn(`Unsupported filter: ${gltfFilter}, 'linear' is used.(in ${this.url})`);
-                    return ccm.TextureBase.Filter.LINEAR;
+                    return ccm.Texture2D.Filter.LINEAR;
             }
         };
         const convertMinFilter = (gltfFilter) => {
             switch (gltfFilter) {
-                case 9728 /* NEAREST */: return [ccm.TextureBase.Filter.NEAREST, ccm.TextureBase.Filter.NONE];
-                case 9729 /* LINEAR */: return [ccm.TextureBase.Filter.LINEAR, ccm.TextureBase.Filter.NONE];
-                case 9984 /* NEAREST_MIPMAP_NEAREST */: return [ccm.TextureBase.Filter.NEAREST, ccm.TextureBase.Filter.NEAREST];
-                case 9985 /* LINEAR_MIPMAP_NEAREST */: return [ccm.TextureBase.Filter.LINEAR, ccm.TextureBase.Filter.NEAREST];
-                case 9986 /* NEAREST_MIPMAP_LINEAR */: return [ccm.TextureBase.Filter.NEAREST, ccm.TextureBase.Filter.LINEAR];
-                case 9987 /* LINEAR_MIPMAP_LINEAR */: return [ccm.TextureBase.Filter.LINEAR, ccm.TextureBase.Filter.LINEAR];
+                case 9728 /* NEAREST */: return [ccm.Texture2D.Filter.NEAREST, ccm.Texture2D.Filter.NONE];
+                case 9729 /* LINEAR */: return [ccm.Texture2D.Filter.LINEAR, ccm.Texture2D.Filter.NONE];
+                case 9984 /* NEAREST_MIPMAP_NEAREST */: return [ccm.Texture2D.Filter.NEAREST, ccm.Texture2D.Filter.NEAREST];
+                case 9985 /* LINEAR_MIPMAP_NEAREST */: return [ccm.Texture2D.Filter.LINEAR, ccm.Texture2D.Filter.NEAREST];
+                case 9986 /* NEAREST_MIPMAP_LINEAR */: return [ccm.Texture2D.Filter.NEAREST, ccm.Texture2D.Filter.LINEAR];
+                case 9987 /* LINEAR_MIPMAP_LINEAR */: return [ccm.Texture2D.Filter.LINEAR, ccm.Texture2D.Filter.LINEAR];
                 default:
                     console.warn(`Unsupported filter: ${gltfFilter}, 'linear' is used.(in ${this.url})`);
-                    return [ccm.TextureBase.Filter.LINEAR, ccm.TextureBase.Filter.NONE];
+                    return [ccm.Texture2D.Filter.LINEAR, ccm.Texture2D.Filter.NONE];
             }
         };
         const result = {};
         if (gltfTexture.sampler === undefined) {
-            result.wrapModeS = ccm.TextureBase.WrapMode.REPEAT;
-            result.wrapModeT = ccm.TextureBase.WrapMode.REPEAT;
+            result.wrapModeS = ccm.Texture2D.WrapMode.REPEAT;
+            result.wrapModeT = ccm.Texture2D.WrapMode.REPEAT;
         }
         else {
             const gltfSampler = this._gltf.samplers[gltfTexture.sampler];
@@ -1954,5 +1984,12 @@ function makeUniqueNames(names, generator) {
         }
     }
     return uniqueNames;
+}
+function base64OfBytes(bytes) {
+    let binary = '';
+    for (let i = 0; i < bytes.length; ++i) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
 }
 //# sourceMappingURL=glTF-converter.js.map
